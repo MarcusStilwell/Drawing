@@ -66,14 +66,50 @@ struct Flower: Shape {
     }
 }
 
+struct ColorCyclingCircle: View {
+    var amount = 0.0
+    var steps = 100
+
+    var body: some View {
+        ZStack {
+            ForEach(0..<steps) { value in
+                Circle()
+                    .inset(by: CGFloat(value))
+                    .strokeBorder(LinearGradient(gradient: Gradient(colors: [
+                        self.color(for: value, brightness: 1),
+                        self.color(for: value, brightness: 0.5)
+                    ]), startPoint: .top, endPoint: .bottom), lineWidth: 2)
+            }
+        }
+    }
+
+    func color(for value: Int, brightness: Double) -> Color {
+        var targetHue = Double(value) / Double(self.steps) + self.amount
+
+        if targetHue > 1 {
+            targetHue -= 1
+        }
+
+        return Color(hue: targetHue, saturation: 1, brightness: brightness)
+    }
+}
+
 struct ContentView: View {
     @State private var petalOffset = -20.0
     @State private var petalWidth = 100.0
+    @State private var colorCycle = 0.0
     
     var body: some View {
-            Text("Hellow World")
-                .frame(width: 300, height: 300)
-                .border(ImagePaint(image: Image("Example"), sourceRect: CGRect(x: 0, y: 0.25, width: 1, height: 0.5), scale: 0.1), width: 30)
+            VStack {
+                ZStack{
+                    ColorCyclingCircle(amount: self.colorCycle)
+                        .frame(width: 300, height: 300)
+                }
+                .drawingGroup()
+                
+                Slider(value: $colorCycle)
+            }
+        
     }
 }
 
