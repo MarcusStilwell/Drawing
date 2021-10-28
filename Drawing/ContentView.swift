@@ -94,22 +94,98 @@ struct ColorCyclingCircle: View {
     }
 }
 
-struct ContentView: View {
-    @State private var petalOffset = -20.0
-    @State private var petalWidth = 100.0
-    @State private var colorCycle = 0.0
+struct Trapezoid: Shape {
+    var insetAmount: CGFloat
     
-    var body: some View {
-            VStack {
-                ZStack{
-                    ColorCyclingCircle(amount: self.colorCycle)
-                        .frame(width: 300, height: 300)
-                }
-                .drawingGroup()
-                
-                Slider(value: $colorCycle)
-            }
+    var animatableData: CGFloat {
+        get { insetAmount }
+        set { self.insetAmount = newValue }
+    }
+    
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
         
+        path.move(to: CGPoint(x: 0, y: rect.maxY))
+        path.addLine(to: CGPoint(x: insetAmount, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX - insetAmount, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: 0, y: rect.maxY))
+
+        return path
+    }
+}
+
+struct Checkerboard: Shape {
+    var rows: Int
+    var columns: Int
+    
+    public var animatableData: AnimatablePair<Double, Double> {
+        get {
+            AnimatablePair(Double(rows), Double(columns))
+        }
+        
+        set {
+            self.rows = Int(newValue.first)
+            self.columns = Int(newValue.second)
+        }
+    }
+    
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        
+        let rowSize = rect.height / CGFloat(rows)
+        let columnSize = rect.width / CGFloat(columns)
+        
+        for row in 0..<rows {
+            for column in 0..<columns {
+                if (row + column).isMultiple(of: 2) {
+                    let startX = columnSize * CGFloat(column)
+                    let startY = rowSize * CGFloat(row)
+                    
+                    let rect = CGRect(x: startX, y: startY, width: columnSize, height: rowSize)
+                    path.addRect(rect)
+                }
+            }
+        }
+        
+        return path
+    }
+}
+
+struct Arrow: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        
+        path.move(to: CGPoint(x: rect.midX / 2, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.midX / 2, y: rect.midY * 1.5))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.midY * 1.5))
+        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY * 1.5))
+        path.addLine(to: CGPoint(x: rect.midX * 1.5, y: rect.midY * 1.5))
+        path.addLine(to: CGPoint(x: rect.midX * 1.5, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.midX / 2, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.midX / 2, y: rect.midY * 1.5))
+        
+        return path
+    }
+}
+
+struct ContentView: View {
+    @State public var lineWidthForArrow: CGFloat = 40
+
+    var body: some View {
+        VStack{
+            Arrow()
+                .stroke(lineWidth: lineWidthForArrow)
+                .frame(width: 300, height: 300, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
+                .onTapGesture {
+                    withAnimation {
+                        lineWidthForArrow += 2
+                    }
+                }
+            
+        }
+            
     }
 }
 
